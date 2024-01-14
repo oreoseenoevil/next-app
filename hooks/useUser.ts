@@ -8,7 +8,7 @@ const useUser = () => {
     const getData = async () => {
       try {
         setLoading(true)
-        const response = await fetch('http://localhost:3000/api/user')
+        const response = await fetch(`${window.location.origin}/api/user`)
         if (!response.ok) {
           throw new Error(`Failed to fetch user data: ${response.status}`)
         }
