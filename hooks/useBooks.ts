@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/client'
 import { Tables } from '@/types/supabase'
-import { useQuery, useQueryClient, useMutation, MutationKey } from 'react-query'
+import { useQuery, useQueryClient, useMutation } from 'react-query'
 import { useMemo } from 'react'
 
 export type BookData = {
@@ -8,6 +8,7 @@ export type BookData = {
   genre?: number
   id?: number
   title?: string
+  created_at?: string
 }
 
 const getData = async () => {
@@ -19,27 +20,48 @@ const getData = async () => {
   return data
 }
 
-const insertData = async (data: BookData) => {
-  const supabase = createClient()
-  const { data: res } = await supabase.from('books').upsert(data)
-
-  return res
-}
-
 const useBooks = () => {
   const data = useQuery('books', getData)
   const queryClient = useQueryClient()
 
-  const bookMutation = useMutation((params: BookData) => insertData(params), {
-    onSuccess: () => queryClient.invalidateQueries('books'),
-    onError: err => console.log(err)
-  })
+  const supabase = createClient()
+
+  const { mutate: addBook } = useMutation(
+    async (params: BookData) => await supabase.from('books').insert(params),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('books')
+      },
+      onError: err => console.log(err)
+    }
+  )
+
+  const { mutate: deleteBook } = useMutation(
+    async (id: number) => await supabase.from('books').delete().match({ id }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('books')
+      },
+      onError: err => console.log(err)
+    }
+  )
+
+  const { mutate: updateBook } = useMutation(
+    async (params: BookData) =>
+      await supabase.from('books').update(params).match({ id: params.id }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('books')
+      },
+      onError: err => console.log(err)
+    }
+  )
 
   const books: Tables<'books'>[] | any = useMemo(() => {
     return data.data || []
   }, [data])
 
-  return { books, isLoading: data.isLoading, bookMutation }
+  return { books, isLoading: data.isLoading, addBook, deleteBook, updateBook }
 }
 
 export default useBooks
