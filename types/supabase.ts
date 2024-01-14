@@ -31,7 +31,6 @@ export interface Database {
           genre: number | null
           id: number
           title: string | null
-          user_id: number | null
         }
         Insert: {
           author?: number | null
@@ -39,7 +38,6 @@ export interface Database {
           genre?: number | null
           id: number
           title?: string | null
-          user_id?: number | null
         }
         Update: {
           author?: number | null
@@ -47,7 +45,6 @@ export interface Database {
           genre?: number | null
           id?: number
           title?: string | null
-          user_id?: number | null
         }
         Relationships: [
           {
@@ -62,13 +59,6 @@ export interface Database {
             columns: ["genre"]
             isOneToOne: false
             referencedRelation: "genres"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "books_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
@@ -85,27 +75,6 @@ export interface Database {
         Update: {
           id?: number
           name?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          created_at: string | null
-          id: number
-          role: string | null
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id: number
-          role?: string | null
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          role?: string | null
-          username?: string
         }
         Relationships: []
       }
