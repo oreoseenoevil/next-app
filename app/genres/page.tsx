@@ -3,13 +3,19 @@
 import { useMemo, useState } from 'react'
 import Modal from '@/components/Modal'
 import SkeletonLoader from '@/components/SkeletonLoader'
-import useGenres from '@/hooks/useGenres'
+import useGenres, { GenreData } from '@/hooks/useGenres'
 import useUser from '@/hooks/useUser'
 import { Tables } from '@/types/supabase'
+import Notification from '@/components/Notification'
 
 interface Genre {
   name?: string
   id?: number
+}
+
+type NotificationState = {
+  title?: string
+  variant?: 'success' | 'warning' | 'danger' | 'info'
 }
 
 const initForm = {
@@ -18,9 +24,16 @@ const initForm = {
 
 export default function Page() {
   const [modal, setModal] = useState<string | null>(null)
-  const { genres, isLoading: genresLoading } = useGenres()
+  const {
+    genres,
+    isLoading: genresLoading,
+    addGenre,
+    updateGenre
+  } = useGenres()
   const { userData, isLoading } = useUser()
   const [formData, setFormData] = useState<Genre>(initForm)
+  const [notificationModal, setNotificationModal] =
+    useState<NotificationState | null>(null)
 
   const onLoading = useMemo(() => {
     return ![isLoading, genresLoading].every(item => !!item)
@@ -36,6 +49,45 @@ export default function Page() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (modal === 'create') {
+      const data: GenreData = {
+        ...formData,
+        id: Math.floor(Math.random() * (100000 - 1 + 1)) + 1
+      }
+
+      addGenre(data, {
+        onSuccess: () => {
+          setNotificationModal({
+            variant: 'success',
+            title: `Successfullly added "${formData.name}" genre!`
+          })
+
+          setFormData(initForm)
+          setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
+        }
+      })
+    }
+
+    if (modal === 'edit') {
+      updateGenre(formData, {
+        onSuccess: () => {
+          setNotificationModal({
+            variant: 'info',
+            title: `Successfullly updated "${formData.name}" genre!`
+          })
+
+          setFormData(initForm)
+          setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
+        }
+      })
+    }
   }
 
   const loaders = (
@@ -109,12 +161,12 @@ export default function Page() {
               </label>
               <input
                 type="text"
-                id="title"
-                name="title"
+                id="name"
+                name="name"
                 value={formData.name}
                 onChange={handleChange}
                 className="mt-1 p-2 w-full border rounded-md border-none outline-none text-black"
-                placeholder="Title"
+                placeholder="Name"
               />
             </div>
 
@@ -126,6 +178,13 @@ export default function Page() {
             </button>
           </form>
         </Modal>
+      )}
+      {notificationModal && (
+        <Notification
+          title={notificationModal.title}
+          variant={notificationModal.variant}
+          onClose={() => setNotificationModal(null)}
+        />
       )}
     </div>
   )

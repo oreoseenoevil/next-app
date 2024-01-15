@@ -3,13 +3,19 @@
 import { useMemo, useState } from 'react'
 import Modal from '@/components/Modal'
 import SkeletonLoader from '@/components/SkeletonLoader'
+import Notification from '@/components/Notification'
 import useAuthors from '@/hooks/useAuthors'
 import useUser from '@/hooks/useUser'
 import { Tables } from '@/types/supabase'
 
-interface Author {
+interface AuthorData {
   name?: string
   id?: number
+}
+
+type NotificationState = {
+  title?: string
+  variant?: 'success' | 'warning' | 'danger' | 'info'
 }
 
 const initForm = {
@@ -18,9 +24,16 @@ const initForm = {
 
 export default function Page() {
   const [modal, setModal] = useState<string | null>(null)
-  const { authors, isLoading: authorsLoading } = useAuthors()
+  const {
+    authors,
+    isLoading: authorsLoading,
+    addAuthor,
+    updateAuthor
+  } = useAuthors()
   const { userData, isLoading } = useUser()
-  const [formData, setFormData] = useState<Author>(initForm)
+  const [formData, setFormData] = useState<AuthorData>(initForm)
+  const [notificationModal, setNotificationModal] =
+    useState<NotificationState | null>(null)
 
   const onLoading = useMemo(() => {
     return ![isLoading, authorsLoading].every(item => !!item)
@@ -36,6 +49,45 @@ export default function Page() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (modal === 'create') {
+      const data: AuthorData = {
+        ...formData,
+        id: Math.floor(Math.random() * (100000 - 1 + 1)) + 1
+      }
+
+      addAuthor(data, {
+        onSuccess: () => {
+          setNotificationModal({
+            variant: 'success',
+            title: `Successfullly added "${formData.name}" genre!`
+          })
+
+          setFormData(initForm)
+          setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
+        }
+      })
+    }
+
+    if (modal === 'edit') {
+      updateAuthor(formData, {
+        onSuccess: () => {
+          setNotificationModal({
+            variant: 'info',
+            title: `Successfullly updated "${formData.name}" genre!`
+          })
+
+          setFormData(initForm)
+          setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
+        }
+      })
+    }
   }
 
   const loaders = (
@@ -82,7 +134,7 @@ export default function Page() {
                       className="border text-xs px-2 py-2 rounded-md"
                       onClick={() => {
                         setModal('edit')
-                        setFormData(item as Author)
+                        setFormData(item as AuthorData)
                       }}
                     >
                       Edit
@@ -101,7 +153,7 @@ export default function Page() {
         )}
       </div>
       {modal && (
-        <Modal title={`${modal} Genre`} onClose={() => setModal(null)}>
+        <Modal title={`${modal} Author`} onClose={() => setModal(null)}>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="name" className="block text-sm font-medium">
@@ -109,12 +161,12 @@ export default function Page() {
               </label>
               <input
                 type="text"
-                id="title"
-                name="title"
+                id="name"
+                name="name"
                 value={formData.name}
                 onChange={handleChange}
                 className="mt-1 p-2 w-full border rounded-md border-none outline-none text-black"
-                placeholder="Title"
+                placeholder="Name"
               />
             </div>
 
@@ -126,6 +178,13 @@ export default function Page() {
             </button>
           </form>
         </Modal>
+      )}
+      {notificationModal && (
+        <Notification
+          title={notificationModal.title}
+          variant={notificationModal.variant}
+          onClose={() => setNotificationModal(null)}
+        />
       )}
     </div>
   )
