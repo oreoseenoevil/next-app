@@ -60,7 +60,7 @@ export default function Page() {
         onSuccess: () => {
           setNotificationModal({
             variant: 'success',
-            title: `Successfullly added "${formData.name}" genre!`
+            title: `Successfullly added "${formData.name}" author!`
           })
 
           setFormData(initForm)
@@ -77,7 +77,7 @@ export default function Page() {
         onSuccess: () => {
           setNotificationModal({
             variant: 'info',
-            title: `Successfullly updated "${formData.name}" genre!`
+            title: `Successfullly updated "${formData.name}" author!`
           })
 
           setFormData(initForm)
