@@ -5,14 +5,21 @@ import useUser from '@/hooks/useUser'
 import { Tables } from '@/types/supabase'
 import moment from 'moment'
 import SkeletonLoader from '@/components/SkeletonLoader'
+import Notification from '@/components/Notification'
 import { useMemo, useState } from 'react'
 import Modal from '@/components/Modal'
 import useAuthors from '@/hooks/useAuthors'
 import useGenres from '@/hooks/useGenres'
+import { fromJSON } from 'postcss'
 
 type Books = Tables<'books'> & {
   author: Tables<'authors'>
   genre: Tables<'genres'>
+}
+
+type NotificationState = {
+  title?: string
+  variant?: 'success' | 'warning' | 'danger' | 'info'
 }
 
 const initForm = {
@@ -34,6 +41,8 @@ export default function Index() {
   const { genres, isLoading: genresLoading } = useGenres()
   const [modal, setModal] = useState<string | null>(null)
   const [formData, setFormData] = useState<BookData>(initForm)
+  const [notificationModal, setNotificationModal] =
+    useState<NotificationState | null>(null)
 
   const onLoading = useMemo(() => {
     return ![isLoading, booksLoading, authorsLoading, genresLoading].every(
@@ -67,8 +76,15 @@ export default function Index() {
 
       addBook(data, {
         onSuccess: () => {
+          setNotificationModal({
+            variant: 'success',
+            title: `Successfullly added ${data.title}!`
+          })
           setFormData(initForm)
           setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
         }
       })
     }
@@ -76,8 +92,15 @@ export default function Index() {
     if (modal === 'edit') {
       updateBook(formData, {
         onSuccess: () => {
+          setNotificationModal({
+            variant: 'info',
+            title: `${formData.title} has been updated.`
+          })
           setFormData(initForm)
           setModal(null)
+          setTimeout(() => {
+            setNotificationModal(null)
+          }, 5000)
         }
       })
     }
@@ -119,7 +142,7 @@ export default function Index() {
           )}
         </main>
       </div>
-      <div className="grid grid-cols-3 gap-4 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         {onLoading && books.length > 0 ? (
           <>
             {books.map((item: Books) => (
@@ -152,7 +175,20 @@ export default function Index() {
                     </button>
                     <button
                       className="border text-xs px-2 py-2 rounded-md"
-                      onClick={() => deleteBook(item.id)}
+                      onClick={() =>
+                        deleteBook(item.id, {
+                          onSuccess: () => {
+                            setNotificationModal({
+                              variant: 'warning',
+                              title: `Deleted book "${item.title}"`
+                            })
+
+                            setTimeout(() => {
+                              setNotificationModal(null)
+                            }, 5000)
+                          }
+                        })
+                      }
                     >
                       Delete
                     </button>
@@ -234,10 +270,17 @@ export default function Index() {
               type="submit"
               className="bg-yellow-500 text-black p-2 rounded-md hover:bg-yellow-500/70 transition duration-300"
             >
-              Submit
+              {modal === 'edit' ? 'Update' : 'Submit'}
             </button>
           </form>
         </Modal>
+      )}
+      {notificationModal && (
+        <Notification
+          title={notificationModal.title}
+          variant={notificationModal.variant}
+          onClose={() => setNotificationModal(null)}
+        />
       )}
     </div>
   )

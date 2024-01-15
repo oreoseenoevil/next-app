@@ -28,7 +28,7 @@ export default function RootLayout({
           </main>
           <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs mt-auto">
             <p>
-              Develop by{' '}
+              Developed by{' '}
               <a
                 href="https://jessiet.dev"
                 target="_blank"
